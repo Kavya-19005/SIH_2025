@@ -3,40 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Accelerometer Data</title>
+  <title>Live Sensor Data</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       text-align: center;
       padding: 20px;
       background: #f4f4f4;
     }
+    .chart-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
     canvas {
-      max-width: 900px;
+      width: 100%;
+      max-width: 580px;
       margin: 20px auto;
       background: white;
       padding: 10px;
       border-radius: 8px;
       box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
     }
+    @media (min-width: 1200px) {
+      .chart-container {
+        flex-direction: row;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>📱 Live Accelerometer Data</h1>
-  <canvas id="accelChart"></canvas>
+  <h1>📱 Live Sensor Data</h1>
+  <div class="chart-container">
+    <div>
+      <h2>Accelerometer Data</h2>
+      <canvas id="accelChart"></canvas>
+    </div>
+    <div>
+      <h2>Gyroscope Data</h2>
+      <canvas id="gyroChart"></canvas>
+    </div>
+  </div>
 
   <script>
-    // Create chart
-    const ctx = document.getElementById('accelChart').getContext('2d');
-    const accelChart = new Chart(ctx, {
+    // --- ACCELEROMETER CHART ---
+    const ctxAccel = document.getElementById('accelChart').getContext('2d');
+    const accelChart = new Chart(ctxAccel, {
       type: 'line',
       data: {
         labels: [],
         datasets: [
-          { label: 'X', borderColor: 'red', data: [], fill: false },
-          { label: 'Y', borderColor: 'blue', data: [], fill: false },
-          { label: 'Z', borderColor: 'green', data: [], fill: false }
+          { label: 'X', borderColor: '#ff6384', data: [], fill: false },
+          { label: 'Y', borderColor: '#36a2eb', data: [], fill: false },
+          { label: 'Z', borderColor: '#ffcd56', data: [], fill: false }
         ]
       },
       options: {
@@ -49,39 +70,74 @@
       }
     });
 
-// WebSocket connection
+    // --- GYROSCOPE CHART ---
+    const ctxGyro = document.getElementById('gyroChart').getContext('2d');
+    const gyroChart = new Chart(ctxGyro, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'X', borderColor: '#4bc0c0', data: [], fill: false },
+          { label: 'Y', borderColor: '#9966ff', data: [], fill: false },
+          { label: 'Z', borderColor: '#ff9f40', data: [], fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: { title: { display: true, text: 'Time' } },
+          y: { title: { display: true, text: 'Angular Velocity (rad/s)' } }
+        }
+      }
+    });
+
+    // --- WEBSOCKET CONNECTIONS ---
+    // Accelerometer WebSocket
     const accelSocket = new WebSocket("ws://172.29.137.227:8000/sensor/connect?type=android.sensor.accelerometer");
-
-    accelSocket.onopen = () => {
-      console.log("Connected to Accelerometer Sensor");
-    };
-
+    accelSocket.onopen = () => console.log("Connected to Accelerometer Sensor");
     accelSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       const values = data.values;
       const time = new Date().toLocaleTimeString();
-
-      // Update chart with accelerometer data
+      
+      // Update accelerometer chart
       accelChart.data.labels.push(time);
-      accelChart.data.datasets[0].data.push(values[0]); // X-axis
-      accelChart.data.datasets[1].data.push(values[1]); // Y-axis
-      accelChart.data.datasets[2].data.push(values[2]); // Z-axis
-
-      // Keep only last 20 points
+      accelChart.data.datasets[0].data.push(values[0]);
+      accelChart.data.datasets[1].data.push(values[1]);
+      accelChart.data.datasets[2].data.push(values[2]);
+      
       if (accelChart.data.labels.length > 20) {
         accelChart.data.labels.shift();
         accelChart.data.datasets.forEach(dataset => dataset.data.shift());
       }
       accelChart.update();
     };
+    accelSocket.onerror = (error) => console.error("Accelerometer WebSocket Error:", error);
+    accelSocket.onclose = () => console.log("Disconnected from Accelerometer");
 
-    accelSocket.onerror = (error) => {
-      console.error("WebSocket Error:", error);
+    // Gyroscope WebSocket
+    const gyroSocket = new WebSocket("ws://172.29.137.227:8000/sensor/connect?type=android.sensor.gyroscope");
+    gyroSocket.onopen = () => console.log("Connected to Gyroscope Sensor");
+    gyroSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const values = data.values;
+      const time = new Date().toLocaleTimeString();
+      
+      // Update gyroscope chart
+      gyroChart.data.labels.push(time);
+      gyroChart.data.datasets[0].data.push(values[0]);
+      gyroChart.data.datasets[1].data.push(values[1]);
+      gyroChart.data.datasets[2].data.push(values[2]);
+      
+      if (gyroChart.data.labels.length > 20) {
+        gyroChart.data.labels.shift();
+        gyroChart.data.datasets.forEach(dataset => dataset.data.shift());
+      }
+      gyroChart.update();
     };
-
-    accelSocket.onclose = () => {
-      console.log("Disconnected from Accelerometer");
-    };
+    gyroSocket.onerror = (error) => console.error("Gyroscope WebSocket Error:", error);
+    gyroSocket.onclose = () => console.log("Disconnected from Gyroscope");
   </script>
 </body>
 </html>

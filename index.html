@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Accelerometer Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    canvas {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>📱 Live Accelerometer Data</h1>
+  <canvas id="accelChart"></canvas>
+
+  <script>
+    // Create chart
+    const ctx = document.getElementById('accelChart').getContext('2d');
+    const accelChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'X', borderColor: 'red', data: [], fill: false },
+          { label: 'Y', borderColor: 'blue', data: [], fill: false },
+          { label: 'Z', borderColor: 'green', data: [], fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: { title: { display: true, text: 'Time' } },
+          y: { title: { display: true, text: 'Acceleration (m/s²)' } }
+        }
+      }
+    });
+
+// WebSocket connection
+    const accelSocket = new WebSocket("ws://172.29.137.227:8000/sensor/connect?type=android.sensor.accelerometer");
+
+    accelSocket.onopen = () => {
+      console.log("Connected to Accelerometer Sensor");
+    };
+
+    accelSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const values = data.values;
+      const time = new Date().toLocaleTimeString();
+
+      // Update chart with accelerometer data
+      accelChart.data.labels.push(time);
+      accelChart.data.datasets[0].data.push(values[0]); // X-axis
+      accelChart.data.datasets[1].data.push(values[1]); // Y-axis
+      accelChart.data.datasets[2].data.push(values[2]); // Z-axis
+
+      // Keep only last 20 points
+      if (accelChart.data.labels.length > 20) {
+        accelChart.data.labels.shift();
+        accelChart.data.datasets.forEach(dataset => dataset.data.shift());
+      }
+      accelChart.update();
+    };
+
+    accelSocket.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    accelSocket.onclose = () => {
+      console.log("Disconnected from Accelerometer");
+    };
+  </script>
+</body>
+</html>

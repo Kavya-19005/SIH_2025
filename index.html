@@ -15,25 +15,44 @@
       flex-direction: column;
       align-items: center;
       margin: 0;
-      min-height: 100vh; /* Ensure the body takes up at least the full viewport height */
+      min-height: 100vh;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+    .warning-banner {
+      display: none;
+      background: red;
+      color: white;
+      font-weight: bold;
+      padding: 15px;
+      width: 100%;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+    .counter {
+      margin: 10px 0 20px 0;
+      font-size: 18px;
+      font-weight: bold;
     }
     .chart-container {
       display: flex;
-      flex-direction: column; /* Stack charts vertically on smaller screens */
+      flex-direction: column;
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
       width: 100%;
+      margin-top: 80px; /* Push charts down so banner doesn't overlap */
     }
     .chart-wrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
-      height: 50vh; /* Fixed height for each chart wrapper */
+      height: 50vh;
       max-width: 90%;
       background: white;
       padding: 10px;
@@ -42,22 +61,25 @@
     }
     canvas {
       width: 100% !important;
-      height: 100% !important; /* Ensure canvas fills the wrapper */
+      height: 100% !important;
     }
-    @media (min-width: 1024px) { /* Switch to horizontal layout on larger screens */
+    @media (min-width: 1024px) {
       .chart-container {
         flex-direction: row;
         gap: 20px;
       }
       .chart-wrapper {
-        max-width: 800px; /* Keep them a reasonable size on large screens */
+        max-width: 800px;
         height: 60vh;
       }
     }
   </style>
 </head>
 <body>
+  <div class="warning-banner" id="warningBanner">⚠️ Accident Detected!</div>
   <h1>📱 Live Sensor Data</h1>
+  <div class="counter">Accidents: <span id="accidentCount">0</span></div>
+
   <div class="chart-container">
     <div class="chart-wrapper">
       <h2>Accelerometer Data</h2>
@@ -70,6 +92,32 @@
   </div>
 
   <script>
+    let accidentCount = 0;
+
+    function triggerAccidentWarning() {
+      accidentCount++;
+      document.getElementById("accidentCount").innerText = accidentCount;
+
+      const banner = document.getElementById("warningBanner");
+      banner.style.display = "block";
+
+      // Auto-hide after 5 seconds (optional)
+      setTimeout(() => {
+        banner.style.display = "none";
+      }, 5000);
+    }
+
+    // Example accident detection rule:
+    // If acceleration magnitude > 25 m/s²
+    function checkAccident(accelValues) {
+      const magnitude = Math.sqrt(
+        accelValues[0] ** 2 + accelValues[1] ** 2 + accelValues[2] ** 2
+      );
+      if (magnitude > 50) {
+        triggerAccidentWarning();
+      }
+    }
+
     // --- ACCELEROMETER CHART ---
     const ctxAccel = document.getElementById('accelChart').getContext('2d');
     const accelChart = new Chart(ctxAccel, {
@@ -136,6 +184,9 @@
         accelChart.data.datasets.forEach(dataset => dataset.data.shift());
       }
       accelChart.update();
+
+      // Accident detection
+      checkAccident(values);
     };
     accelSocket.onerror = (error) => console.error("Accelerometer WebSocket Error:", error);
     accelSocket.onclose = () => console.log("Disconnected from Accelerometer");

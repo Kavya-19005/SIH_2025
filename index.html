@@ -14,22 +14,27 @@
     }
     .chart-container {
       display: flex;
+      flex-direction: column; /* Stack charts vertically on smaller screens */
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
     }
     canvas {
       width: 100%;
-      max-width: 800px; /* Increased max-width */
+      max-width: 90%; /* Let the canvas grow to 90% of its container */
+      height: auto;
       margin: 20px auto;
       background: white;
       padding: 10px;
       border-radius: 8px;
       box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
     }
-    @media (min-width: 1650px) { /* Adjusted media query for larger screens */
+    @media (min-width: 1024px) { /* Switch to horizontal layout on larger screens */
       .chart-container {
         flex-direction: row;
+      }
+      canvas {
+        max-width: 800px; /* Keep them a reasonable size on large screens */
       }
     }
   </style>
@@ -63,6 +68,7 @@
       options: {
         responsive: true,
         animation: false,
+        maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: 'Time' } },
           y: { title: { display: true, text: 'Acceleration (m/s²)' } }
@@ -85,6 +91,7 @@
       options: {
         responsive: true,
         animation: false,
+        maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: 'Time' } },
           y: { title: { display: true, text: 'Angular Velocity (rad/s)' } }

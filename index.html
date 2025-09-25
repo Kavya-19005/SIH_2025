@@ -11,6 +11,14 @@
       text-align: center;
       padding: 20px;
       background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      min-height: 100vh; /* Ensure the body takes up at least the full viewport height */
+    }
+    h1 {
+      margin-bottom: 20px;
     }
     .chart-container {
       display: flex;
@@ -18,23 +26,31 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-    }
-    canvas {
       width: 100%;
-      max-width: 90%; /* Let the canvas grow to 90% of its container */
-      height: auto;
-      margin: 20px auto;
+    }
+    .chart-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 50vh; /* Fixed height for each chart wrapper */
+      max-width: 90%;
       background: white;
       padding: 10px;
       border-radius: 8px;
       box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
     }
+    canvas {
+      width: 100% !important;
+      height: 100% !important; /* Ensure canvas fills the wrapper */
+    }
     @media (min-width: 1024px) { /* Switch to horizontal layout on larger screens */
       .chart-container {
         flex-direction: row;
       }
-      canvas {
+      .chart-wrapper {
         max-width: 800px; /* Keep them a reasonable size on large screens */
+        height: 60vh;
       }
     }
   </style>
@@ -42,11 +58,11 @@
 <body>
   <h1>📱 Live Sensor Data</h1>
   <div class="chart-container">
-    <div>
+    <div class="chart-wrapper">
       <h2>Accelerometer Data</h2>
       <canvas id="accelChart"></canvas>
     </div>
-    <div>
+    <div class="chart-wrapper">
       <h2>Gyroscope Data</h2>
       <canvas id="gyroChart"></canvas>
     </div>
